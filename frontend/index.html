@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PsiAgenda - Protótipo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <section class="screen active" id="screen-login">
+      <div class="auth-card">
+        <div class="brand-block">
+          <p class="brand-tag">PsiAgenda</p>
+          <h1>Organize pacientes, sessões e pagamentos.</h1>
+          <p>Faça login para acessar o protótipo.</p>
+        </div>
+        <form id="login-form" class="stack-form">
+          <label class="field">
+            <span>Login</span>
+            <input type="text" name="login" placeholder="seu.login" required>
+          </label>
+          <label class="field">
+            <span>Senha</span>
+            <input type="password" name="password" placeholder="••••••••" required>
+          </label>
+          <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+          <!-- p class="hint">Validação mock: qualquer login e senha funcionam.</p -->
+        </form>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-home">
+      <div class="container">
+        <header class="topbar topbar-home">
+          <div>
+            <p class="eyebrow">Painel principal</p>
+            <h2>Olá, profissional 👋</h2>
+          </div>
+          <button type="button" class="btn btn-secondary nav-link" data-target="screen-login">Sair</button>
+        </header>
+
+        <main class="content content-home">
+          <p class="section-intro">Escolha uma funcionalidade para navegar nas telas do protótipo:</p>
+          <div class="action-grid">
+            <button type="button" class="nav-card nav-link" data-target="screen-patient">
+              <i class="fa-solid fa-user"></i>
+              <span>Cadastro de Paciente</span>
+            </button>
+            <button type="button" class="nav-card nav-link" data-target="screen-session">
+              <i class="fa-solid fa-calendar-plus"></i>
+              <span>Nova Sessão</span>
+            </button>
+            <button type="button" class="nav-card nav-link" data-target="screen-package">
+              <i class="fa-solid fa-box-open"></i>
+              <span>Novo Pacote</span>
+            </button>
+            <button type="button" class="nav-card nav-link" data-target="screen-payments">
+              <i class="fa-solid fa-wallet"></i>
+              <span>Pagamentos</span>
+            </button>
+            <button type="button" class="nav-card nav-link" data-target="screen-reschedule">
+              <i class="fa-solid fa-clock-rotate-left"></i>
+              <span>Remarcar Sessão</span>
+            </button>
+          </div>
+        </main>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-patient">
+      <div class="container">
+        <header class="topbar">
+          <button type="button" class="link-back nav-link" data-target="screen-home">
+            <i class="fa-solid fa-arrow-left"></i> Paciente
+          </button>
+          <div class="actions">
+            <button type="button" class="btn btn-primary save-feedback">Salvar</button>
+            <button type="button" class="btn btn-secondary nav-link" data-target="screen-home">Cancelar</button>
+          </div>
+        </header>
+
+        <form class="content stack-form">
+          <label class="field">
+            <span>Nome</span>
+            <input type="text" placeholder="Nome completo">
+          </label>
+          <label class="field">
+            <span>Telefone</span>
+            <input type="tel" placeholder="(11) 90000-0000">
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input type="email" placeholder="paciente@email.com">
+          </label>
+          <label class="field">
+            <span>Observações</span>
+            <textarea rows="4" placeholder="Anotações clínicas e administrativas."></textarea>
+          </label>
+        </form>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-session">
+      <div class="container">
+        <header class="topbar">
+          <button type="button" class="link-back nav-link" data-target="screen-home">
+            <i class="fa-solid fa-arrow-left"></i> Nova Sessão
+          </button>
+          <div class="actions">
+            <button type="button" class="btn btn-primary save-feedback">Salvar</button>
+            <button type="button" class="btn btn-secondary nav-link" data-target="screen-home">Cancelar</button>
+          </div>
+        </header>
+
+        <form class="content stack-form two-col">
+          <label class="field col-2">
+            <span>Cliente</span>
+            <select>
+              <option>Selecionar cliente</option>
+              <option>Ana Souza</option>
+              <option>Carlos Lima</option>
+              <option>Patrícia Gomes</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>Data</span>
+            <div class="input-icon">
+              <input type="text" placeholder="12.03.2026">
+              <i class="fa-regular fa-calendar"></i>
+            </div>
+          </label>
+          <label class="field">
+            <span>Hora</span>
+            <div class="input-icon">
+              <input type="text" placeholder="14:00">
+              <i class="fa-regular fa-clock"></i>
+            </div>
+          </label>
+          <label class="field col-2">
+            <span>Valor</span>
+            <div class="input-prefix">
+              <span>R$</span>
+              <input type="text" placeholder="100,00">
+            </div>
+          </label>
+        </form>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-package">
+      <div class="container">
+        <header class="topbar">
+          <button type="button" class="link-back nav-link" data-target="screen-home">
+            <i class="fa-solid fa-arrow-left"></i> Novo Pacote
+          </button>
+          <div class="actions">
+            <button type="button" class="btn btn-primary save-feedback">Salvar</button>
+            <button type="button" class="btn btn-secondary nav-link" data-target="screen-home">Cancelar</button>
+          </div>
+        </header>
+
+        <form class="content stack-form two-col">
+          <label class="field col-2">
+            <span>Cliente</span>
+            <select>
+              <option>Selecionar cliente</option>
+              <option>Ana Souza</option>
+              <option>Carlos Lima</option>
+              <option>Patrícia Gomes</option>
+            </select>
+          </label>
+
+          <div class="section-block col-2">
+            <p class="section-label">Repetição semanal</p>
+            <div class="row-gap">
+              <span class="muted">Repetir a cada</span>
+              <div class="inline-group">
+                <select>
+                  <option>1</option>
+                  <option>2</option>
+                  <option>3</option>
+                </select>
+                <select>
+                  <option>semana(s)</option>
+                  <option>mês(es)</option>
+                </select>
+              </div>
+            </div>
+            <div class="row-gap">
+              <span class="muted">Dias</span>
+              <div class="weekdays">
+                <label><input type="checkbox"> <span>M</span></label>
+                <label><input type="checkbox"> <span>T</span></label>
+                <label><input type="checkbox"> <span>W</span></label>
+                <label><input type="checkbox"> <span>T</span></label>
+                <label><input type="checkbox"> <span>F</span></label>
+                <label><input type="checkbox"> <span>S</span></label>
+                <label><input type="checkbox"> <span>S</span></label>
+              </div>
+            </div>
+          </div>
+
+          <label class="field">
+            <span>Hora</span>
+            <div class="input-icon">
+              <input type="text" placeholder="14:00">
+              <i class="fa-regular fa-clock"></i>
+            </div>
+          </label>
+          <label class="field">
+            <span>Quantidade de sessões</span>
+            <input type="text" placeholder="10">
+          </label>
+          <label class="field col-2">
+            <span>Valor total</span>
+            <div class="input-prefix">
+              <span>R$</span>
+              <input type="text" placeholder="1000,00">
+            </div>
+          </label>
+
+          <fieldset class="field col-2 no-border">
+            <legend>Condição de pagamento</legend>
+            <label class="radio-line"><input type="radio" name="payment-condition" value="avista"> À vista</label>
+            <label class="radio-line"><input type="radio" name="payment-condition" value="parcelado" checked> Parcelado</label>
+          </fieldset>
+
+          <label class="field col-2">
+            <span>Número de parcelas</span>
+            <select>
+              <option>3</option>
+              <option>6</option>
+              <option>10</option>
+            </select>
+          </label>
+
+          <div class="field col-2">
+            <span>Datas de pagamento</span>
+            <div class="stack-mini">
+              <div class="input-icon">
+                <input type="text" placeholder="01.04.2026">
+                <i class="fa-regular fa-calendar"></i>
+              </div>
+              <div class="input-icon">
+                <input type="text" placeholder="01.05.2026">
+                <i class="fa-regular fa-calendar"></i>
+              </div>
+              <div class="input-icon">
+                <input type="text" placeholder="01.06.2026">
+                <i class="fa-regular fa-calendar"></i>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-payments">
+      <div class="container">
+        <header class="topbar">
+          <button type="button" class="link-back nav-link" data-target="screen-home">
+            <i class="fa-solid fa-arrow-left"></i> Pagamentos
+          </button>
+        </header>
+
+        <div class="content stack-form">
+          <label class="field">
+            <span>Cliente</span>
+            <select>
+              <option>Selecionar cliente</option>
+              <option>Ana Souza</option>
+              <option>Carlos Lima</option>
+              <option>Patrícia Gomes</option>
+            </select>
+          </label>
+
+          <div class="table-wrapper">
+            <table class="payments-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Tipo</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                  <th>Observação</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>12.03</td>
+                  <td>Spot</td>
+                  <td>R$ 100</td>
+                  <td>
+                    <select class="status-select">
+                      <option selected>Pendente</option>
+                      <option>Pago</option>
+                    </select>
+                  </td>
+                  <td><input type="text" placeholder="Adicionar nota"></td>
+                </tr>
+                <tr>
+                  <td>19.03</td>
+                  <td>Pacote</td>
+                  <td>R$ 100</td>
+                  <td>
+                    <select class="status-select">
+                      <option>Pendente</option>
+                      <option selected>Pago</option>
+                    </select>
+                  </td>
+                  <td><input type="text" placeholder="Adicionar nota"></td>
+                </tr>
+                <tr>
+                  <td>26.03</td>
+                  <td>Pacote</td>
+                  <td>R$ 100</td>
+                  <td>
+                    <select class="status-select">
+                      <option selected>Pendente</option>
+                      <option>Pago</option>
+                    </select>
+                  </td>
+                  <td><input type="text" placeholder="Adicionar nota"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="screen-reschedule">
+      <div class="container">
+        <header class="topbar">
+          <button type="button" class="link-back nav-link" data-target="screen-home">
+            <i class="fa-solid fa-arrow-left"></i> Remarcar Sessão
+          </button>
+        </header>
+
+        <form class="content stack-form two-col">
+          <label class="field col-2">
+            <span>Cliente</span>
+            <select>
+              <option>Selecionar cliente</option>
+              <option>Ana Souza</option>
+              <option>Carlos Lima</option>
+              <option>Patrícia Gomes</option>
+            </select>
+          </label>
+
+          <div class="section-block col-2">
+            <p class="muted">Sessão atual: <strong>12.03.2026 - 14:00</strong></p>
+          </div>
+
+          <label class="field">
+            <span>Nova data</span>
+            <div class="input-icon">
+              <input type="text" placeholder="15.03.2026">
+              <i class="fa-regular fa-calendar"></i>
+            </div>
+          </label>
+          <label class="field">
+            <span>Nova hora</span>
+            <div class="input-icon">
+              <input type="text" placeholder="16:00">
+              <i class="fa-regular fa-clock"></i>
+            </div>
+          </label>
+          <div class="col-2 align-right">
+            <button type="button" class="btn btn-primary save-feedback">Confirmar</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <div class="toast" id="toast">Ação simulada com sucesso.</div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
