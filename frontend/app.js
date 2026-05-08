@@ -76,6 +76,7 @@ $(function () {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (id === 'screen-patients-list') renderPatientList();
     if (id === 'screen-agenda')        renderAgenda();
+    if (id === 'screen-profile')       fillProfileForm();
   }
 
   function showToast(msg) {
@@ -146,6 +147,11 @@ $(function () {
   // ── Generic navigation ───────────────────────────────────────────────────
   $(document).on('click', '.nav-link', function () {
     const target = $(this).data('target');
+    if (target === 'screen-login') {
+      state.token = null;
+      state.usuario = null;
+      localStorage.removeItem('psiagenda_token');
+    }
     if (target) showScreen(target);
   });
 
@@ -161,10 +167,27 @@ $(function () {
   $('#modal-btn-no').on('click', closeModal);
 
   // ── Login ────────────────────────────────────────────────────────────────
-  $('#login-form').on('submit', function (e) {
+  $('#login-form').on('submit', async function (e) {
     e.preventDefault();
-    showScreen('screen-home');
-    showToast('Login realizado no modo protótipo.');
+    const login = $('[name="login"]', this).val();
+    const senha = $('[name="password"]', this).val();
+    const $btn  = $(this).find('button[type="submit"]');
+    $btn.prop('disabled', true).text('Entrando...');
+    try {
+      const data = await apiFetch('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ login, senha }),
+      });
+      state.token = data.access_token;
+      localStorage.setItem('psiagenda_token', state.token);
+      state.usuario = await apiFetch('/usuarios/me');
+      $('#home-greeting-name').text(state.usuario.nome);
+      showScreen('screen-home');
+    } catch (err) {
+      showToast(err.message || 'Erro ao fazer login.');
+    } finally {
+      $btn.prop('disabled', false).text('Entrar');
+    }
   });
 
   // ── Save: Cadastro de Paciente ───────────────────────────────────────────
@@ -305,12 +328,25 @@ $(function () {
     });
   });
 
+  // ── Meu Perfil: pré-preencher ────────────────────────────────────────────
+  function fillProfileForm() {
+    if (!state.usuario) return;
+    $('[name="name"]', '#form-profile').val(state.usuario.nome);
+  }
+
   // ── Meu Perfil: salvar ───────────────────────────────────────────────────
-  $('#btn-save-profile').on('click', function () {
-    const name = $('[name="name"]', '#form-profile').val();
-    if (name) $('#home-greeting-name').text(name);
-    showToast('Perfil atualizado com sucesso.');
-    showScreen('screen-home');
+  $('#btn-save-profile').on('click', async function () {
+    const nome = $('[name="name"]', '#form-profile').val();
+    if (!nome) { showToast('Informe o nome.'); return; }
+    try {
+      await apiFetch('/usuarios/me', { method: 'PUT', body: JSON.stringify({ nome }) });
+      state.usuario.nome = nome;
+      $('#home-greeting-name').text(nome);
+      showToast('Perfil atualizado com sucesso.');
+      showScreen('screen-home');
+    } catch (err) {
+      showToast(err.message || 'Erro ao salvar perfil.');
+    }
   });
 
   // ── Editar paciente (placeholder) ────────────────────────────────────────

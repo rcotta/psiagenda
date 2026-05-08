@@ -4,7 +4,7 @@ from database import get_db, init_db, load_queries
 Q = load_queries("usuario.sql")
 
 USUARIOS = [
-    ("Renata", "renata", "123456"),
+    ("Renata", "renata", "Psi@2026"),
 ]
 
 
