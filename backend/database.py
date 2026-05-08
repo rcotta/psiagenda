@@ -3,7 +3,7 @@ import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent / "data/psiagenda.db"
+DB_PATH = Path(__file__).parent.parent / "data/psiagenda.db"
 SQL_DIR = Path(__file__).parent / "sql"
 
 

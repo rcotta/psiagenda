@@ -15,29 +15,12 @@ Sistema de gestão de agenda para psicólogos. Permite cadastrar pacientes, agen
 
 ```
 /
-├── frontend/   Protótipo HTML navegável (HTML + CSS + jQuery)
-├── backend/    API REST em Python (FastAPI + SQLite)
+├── frontend/       Interface web (HTML + CSS + jQuery), servida pelo backend
+├── backend/        API REST em Python (FastAPI + SQLite)
 └── DATA_MODEL.md   Documentação do modelo de dados
 ```
 
-## Frontend
-
-Protótipo navegável em HTML puro, sem dependências de build. Todas as telas estão em um único arquivo `frontend/index.html`.
-
-**Para abrir:** basta abrir `frontend/index.html` no navegador. Qualquer login/senha é aceito no protótipo.
-
-**Telas disponíveis:**
-- Login e Home
-- Lista de Pacientes e Perfil do Paciente
-- Nova Sessão e Novo Pacote
-- Remarcar e Cancelar Sessão
-- Pagamentos
-- Agenda Semanal
-- Meu Perfil
-
-## Backend
-
-API REST construída com FastAPI e SQLite. Autenticação via JWT Bearer token.
+## Como rodar
 
 ### Pré-requisitos
 
@@ -55,12 +38,25 @@ uv sync
 # Cria o banco de dados e o usuário inicial (renata / 123456)
 uv run python seed.py
 
-# Sobe a API
+# Sobe a aplicação (frontend + API na mesma porta)
 uv run uvicorn main:app --reload
 ```
 
-A API fica disponível em `http://localhost:8000`.
-Documentação interativa (Swagger) em `http://localhost:8000/docs`.
+Acesse `http://localhost:8000` — o frontend é servido diretamente pelo FastAPI como arquivos estáticos.
+Documentação interativa da API (Swagger) em `http://localhost:8000/docs`.
+
+**Telas disponíveis:**
+- Login e Home
+- Lista de Pacientes e Perfil do Paciente
+- Nova Sessão e Novo Pacote
+- Remarcar e Cancelar Sessão
+- Pagamentos
+- Agenda Semanal
+- Meu Perfil
+
+## Backend
+
+API REST construída com FastAPI e SQLite. Autenticação via JWT Bearer token.
 
 ### Principais endpoints
 
