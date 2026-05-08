@@ -71,14 +71,16 @@ test('fluxo completo PsiAgenda', async ({ page }) => {
         'pointer-events:none',
         'z-index:2147483647',
         'opacity:0.9',
-        'transition:transform 0.3s ease-out,opacity 0.3s ease-out',
       ].join(';');
       document.body.appendChild(dot);
-      requestAnimationFrame(() => {
+      // Mantém o dot visível por 200ms antes de animar — sem isso, requestAnimationFrame
+      // dispara antes do primeiro paint e o dot nunca aparece no estado inicial.
+      setTimeout(() => {
+        dot.style.transition = 'transform 0.35s ease-out,opacity 0.35s ease-out';
         dot.style.transform = 'scale(1.6)';
         dot.style.opacity = '0';
-      });
-      setTimeout(() => dot.remove(), 400);
+      }, 200);
+      setTimeout(() => dot.remove(), 600);
     });
   });
 
