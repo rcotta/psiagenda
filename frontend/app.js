@@ -61,6 +61,9 @@ $(function () {
     if (id === 'screen-profile')       fillProfileForm();
     const screensComClientes = ['screen-session', 'screen-package', 'screen-reschedule', 'screen-cancel-session', 'screen-payments'];
     if (screensComClientes.includes(id)) fillClienteSelects();
+    if (id === 'screen-payments') {
+      $('#payments-table-body').html('<tr><td colspan="5" class="table-empty">Selecione um cliente para ver os pagamentos.</td></tr>');
+    }
   }
 
   function showScreen(id) {
@@ -311,12 +314,13 @@ $(function () {
 
     const updates = rows.map((_, tr) => {
       const $tr    = $(tr);
-      const id     = $tr.data('pag-id');
-      const status = $tr.find('.status-select').val();
-      const notas  = $tr.find('.pag-notas').val() || null;
+      const id           = $tr.data('pag-id');
+      const status       = $tr.find('.status-select').val();
+      const notas        = $tr.find('.pag-notas').val() || null;
+      const dt_pagamento = $tr.find('.pag-dt-pagamento').val() || null;
       return apiFetch(`/pagamentos/${id}`, {
         method: 'PUT',
-        body: JSON.stringify({ status, notas }),
+        body: JSON.stringify({ status, notas, dt_pagamento }),
       });
     }).get();
 
@@ -369,6 +373,7 @@ $(function () {
         secondaryTarget: 'screen-reschedule',
       });
       $('#form-reschedule')[0].reset();
+      $('#reschedule-patient-name').text('—');
       $('#reschedule-current-session').html('<p class="muted">Selecione um cliente para ver as sessões.</p>');
     } catch (err) {
       showToast(err.message || 'Erro ao remarcar sessão.');
@@ -446,6 +451,7 @@ $(function () {
   $('#reschedule-patient-select').on('change', async function () {
     const id   = $(this).val();
     const nome = $(this).find('option:selected').text();
+    $('#reschedule-patient-name').text(nome || '—');
     if (!id) {
       $('#reschedule-current-session').html('<p class="muted">Selecione um cliente para ver as sessões.</p>');
       $(this).data('cliente-nome', '');
@@ -521,7 +527,7 @@ $(function () {
       }
       $tbody.html(pagamentos.map(pag => `
         <tr data-pag-id="${pag.id}" data-status-orig="${pag.status}">
-          <td>${pag.dt_vencimento ? formatDate(pag.dt_vencimento) : '—'}</td>
+          <td><input type="date" class="pag-dt-pagamento" value="${pag.dt_pagamento || ''}"></td>
           <td>${pag.tipo_sessao || '—'}</td>
           <td>R$ ${pag.valor ?? '—'}</td>
           <td>
@@ -700,7 +706,7 @@ $(function () {
                 </div>
                 <div class="session-actions">
                   ${s.status === 'pendente' ? `
-                    <button class="btn btn-primary btn-sm agenda-finalizar" data-sessao-id="${s.id}">Realizada</button>
+                    <button class="btn btn-primary btn-sm agenda-finalizar" data-sessao-id="${s.id}">Marcar como Realizada</button>
                     <button class="btn btn-secondary btn-sm agenda-reschedule" data-patient-id="${s.id_cliente}">Remarcar</button>
                     <button class="btn btn-danger btn-sm agenda-cancel" data-patient-id="${s.id_cliente}">Cancelar</button>
                   ` : badge(s.status)}

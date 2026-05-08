@@ -282,13 +282,13 @@
           </button>
         </header>
         <form class="content stack-form two-col" id="form-reschedule" novalidate>
-          <label class="field col-2">
-            <span>Cliente <span class="required-mark">*</span></span>
-            <select name="patient" id="reschedule-patient-select">
-              <option value="">Selecionar cliente</option>
-            </select>
-            <span class="error-msg">Selecione o cliente.</span>
-          </label>
+          <div class="field col-2">
+            <span>Cliente</span>
+            <p id="reschedule-patient-name" class="field-static-value">—</p>
+          </div>
+          <select name="patient" id="reschedule-patient-select" style="display:none">
+            <option value="">Selecionar cliente</option>
+          </select>
           <div class="section-block col-2" id="reschedule-current-session">
             <p class="muted">Selecione um cliente para ver a próxima sessão.</p>
           </div>

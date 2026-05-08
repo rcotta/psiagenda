@@ -60,3 +60,7 @@ env/
 
 data/
 */psiagenda.db
+
+*/node_modules/
+*/test-results/
+*/playwright-report/

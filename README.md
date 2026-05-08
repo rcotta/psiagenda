@@ -81,6 +81,60 @@ API REST construída com FastAPI e SQLite. Autenticação via JWT Bearer token.
 - **bcrypt** — hash de senhas
 - **uv** — gerenciador de pacotes e ambiente virtual
 
+## Testes E2E
+
+Testes de ponta a ponta com [Playwright](https://playwright.dev/), localizados em `e2e-tests/`.
+
+O suite cobre o fluxo completo: login → cadastro de pacientes → nova sessão → novo pacote → pagamentos → remarcar sessão → marcar como realizada.
+
+### Pré-requisitos
+
+- Node.js 18+
+- Aplicação rodando em `http://localhost:8000` (veja [Como rodar](#como-rodar))
+
+### Instalação
+
+```bash
+cd e2e-tests
+npm install
+npx playwright install chromium
+```
+
+### Execução
+
+```bash
+# Headless (padrão) — gera vídeo em test-results/
+npm test
+
+# Com janela visível
+npm run test:headed
+
+# Abrir relatório HTML após a execução
+npm run report
+```
+
+### Opções
+
+| Variável de ambiente | Padrão | Descrição |
+|----------------------|--------|-----------|
+| `PSIAGENDA_DELAY_MS` | `1000` | Pausa (ms) entre trocas de tela. Delay por campo = valor ÷ 4. |
+
+Exemplo com delay maior para gravação em vídeo:
+
+```bash
+PSIAGENDA_DELAY_MS=2000 npm test
+```
+
+### Vídeo gerado
+
+Cada execução grava um vídeo WebM em `e2e-tests/test-results/`. Para converter para MP4 (requer ffmpeg):
+
+```bash
+ffmpeg -i test-results/<pasta>/video.webm -c:v libx264 -crf 18 -preset slow -c:a aac output.mp4
+```
+
+---
+
 ## Modelo de dados
 
 Documentado em detalhes em [DATA_MODEL.md](DATA_MODEL.md).
