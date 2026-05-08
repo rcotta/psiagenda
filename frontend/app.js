@@ -699,8 +699,11 @@ $(function () {
                   <div class="session-meta">${s.tipo || '—'}</div>
                 </div>
                 <div class="session-actions">
-                  <button class="btn btn-secondary btn-sm agenda-reschedule" data-patient-id="${s.id_cliente}">Remarcar</button>
-                  <button class="btn btn-danger btn-sm agenda-cancel" data-patient-id="${s.id_cliente}">Cancelar</button>
+                  ${s.status === 'pendente' ? `
+                    <button class="btn btn-primary btn-sm agenda-finalizar" data-sessao-id="${s.id}">Realizada</button>
+                    <button class="btn btn-secondary btn-sm agenda-reschedule" data-patient-id="${s.id_cliente}">Remarcar</button>
+                    <button class="btn btn-danger btn-sm agenda-cancel" data-patient-id="${s.id_cliente}">Cancelar</button>
+                  ` : badge(s.status)}
                 </div>
               </div>`;
           }).join('');
@@ -712,6 +715,17 @@ $(function () {
       $('#agenda-container').html('<p class="muted">Erro ao carregar agenda.</p>');
     }
   }
+
+  $(document).on('click', '.agenda-finalizar', async function () {
+    const sessaoId = $(this).data('sessao-id');
+    try {
+      await apiFetch(`/sessoes/${sessaoId}/finalizar`, { method: 'PUT' });
+      showToast('Sessão marcada como realizada.');
+      renderAgenda();
+    } catch (err) {
+      showToast(err.message || 'Erro ao finalizar sessão.');
+    }
+  });
 
   $(document).on('click', '.agenda-reschedule', async function () {
     const id = $(this).data('patient-id');
