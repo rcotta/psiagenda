@@ -12,6 +12,8 @@
 </head>
 <body>
   <div class="app-shell">
+
+    <!-- LOGIN -->
     <section class="screen active" id="screen-login">
       <div class="auth-card">
         <div class="brand-block">
@@ -29,26 +31,33 @@
             <input type="password" name="password" placeholder="••••••••" required>
           </label>
           <button type="submit" class="btn btn-primary btn-full">Entrar</button>
-          <!-- p class="hint">Validação mock: qualquer login e senha funcionam.</p -->
         </form>
       </div>
     </section>
 
+    <!-- HOME -->
     <section class="screen" id="screen-home">
       <div class="container">
         <header class="topbar topbar-home">
           <div>
             <p class="eyebrow">Painel principal</p>
-            <h2>Olá, profissional 👋</h2>
+            <h2>Olá, <span id="home-greeting-name">profissional</span> 👋</h2>
           </div>
           <button type="button" class="btn btn-secondary nav-link" data-target="screen-login">Sair</button>
         </header>
-
         <main class="content content-home">
           <p class="section-intro">Escolha uma funcionalidade para navegar nas telas do protótipo:</p>
           <div class="action-grid">
+            <button type="button" class="nav-card nav-link" data-target="screen-patients-list">
+              <i class="fa-solid fa-users"></i>
+              <span>Lista de Pacientes</span>
+            </button>
+            <button type="button" class="nav-card nav-link" data-target="screen-agenda">
+              <i class="fa-solid fa-calendar-days"></i>
+              <span>Agenda</span>
+            </button>
             <button type="button" class="nav-card nav-link" data-target="screen-patient">
-              <i class="fa-solid fa-user"></i>
+              <i class="fa-solid fa-user-plus"></i>
               <span>Cadastro de Paciente</span>
             </button>
             <button type="button" class="nav-card nav-link" data-target="screen-session">
@@ -67,44 +76,55 @@
               <i class="fa-solid fa-clock-rotate-left"></i>
               <span>Remarcar Sessão</span>
             </button>
+            <button type="button" class="nav-card nav-link" data-target="screen-cancel-session">
+              <i class="fa-solid fa-calendar-xmark"></i>
+              <span>Cancelar Sessão</span>
+            </button>
+            <button type="button" class="nav-card nav-link" data-target="screen-profile">
+              <i class="fa-solid fa-circle-user"></i>
+              <span>Meu Perfil</span>
+            </button>
           </div>
         </main>
       </div>
     </section>
 
+    <!-- CADASTRO DE PACIENTE -->
     <section class="screen" id="screen-patient">
       <div class="container">
         <header class="topbar">
           <button type="button" class="link-back nav-link" data-target="screen-home">
-            <i class="fa-solid fa-arrow-left"></i> Paciente
+            <i class="fa-solid fa-arrow-left"></i> Cadastro de Paciente
           </button>
           <div class="actions">
-            <button type="button" class="btn btn-primary save-feedback">Salvar</button>
+            <button type="button" class="btn btn-primary" id="btn-save-patient">Salvar</button>
             <button type="button" class="btn btn-secondary nav-link" data-target="screen-home">Cancelar</button>
           </div>
         </header>
-
-        <form class="content stack-form">
+        <form class="content stack-form" id="form-patient" novalidate>
           <label class="field">
-            <span>Nome</span>
-            <input type="text" placeholder="Nome completo">
+            <span>Nome <span class="required-mark">*</span></span>
+            <input type="text" name="name" placeholder="Nome completo">
+            <span class="error-msg">Informe o nome do paciente.</span>
           </label>
           <label class="field">
-            <span>Telefone</span>
-            <input type="tel" placeholder="(11) 90000-0000">
+            <span>Telefone <span class="required-mark">*</span></span>
+            <input type="tel" name="phone" placeholder="(11) 90000-0000">
+            <span class="error-msg">Informe o telefone.</span>
           </label>
           <label class="field">
             <span>Email</span>
-            <input type="email" placeholder="paciente@email.com">
+            <input type="email" name="email" placeholder="paciente@email.com">
           </label>
           <label class="field">
             <span>Observações</span>
-            <textarea rows="4" placeholder="Anotações clínicas e administrativas."></textarea>
+            <textarea rows="4" name="notes" placeholder="Anotações clínicas e administrativas."></textarea>
           </label>
         </form>
       </div>
     </section>
 
+    <!-- NOVA SESSÃO -->
     <section class="screen" id="screen-session">
       <div class="container">
         <header class="topbar">
@@ -112,46 +132,43 @@
             <i class="fa-solid fa-arrow-left"></i> Nova Sessão
           </button>
           <div class="actions">
-            <button type="button" class="btn btn-primary save-feedback">Salvar</button>
+            <button type="button" class="btn btn-primary" id="btn-save-session">Salvar</button>
             <button type="button" class="btn btn-secondary nav-link" data-target="screen-home">Cancelar</button>
           </div>
         </header>
-
-        <form class="content stack-form two-col">
+        <form class="content stack-form two-col" id="form-session" novalidate>
           <label class="field col-2">
-            <span>Cliente</span>
-            <select>
-              <option>Selecionar cliente</option>
+            <span>Cliente <span class="required-mark">*</span></span>
+            <select name="patient">
+              <option value="">Selecionar cliente</option>
               <option>Ana Souza</option>
               <option>Carlos Lima</option>
               <option>Patrícia Gomes</option>
             </select>
+            <span class="error-msg">Selecione o cliente.</span>
           </label>
           <label class="field">
-            <span>Data</span>
-            <div class="input-icon">
-              <input type="text" placeholder="12.03.2026">
-              <i class="fa-regular fa-calendar"></i>
-            </div>
+            <span>Data <span class="required-mark">*</span></span>
+            <input type="date" name="date">
+            <span class="error-msg">Informe a data.</span>
           </label>
           <label class="field">
-            <span>Hora</span>
-            <div class="input-icon">
-              <input type="text" placeholder="14:00">
-              <i class="fa-regular fa-clock"></i>
-            </div>
+            <span>Hora <span class="required-mark">*</span></span>
+            <input type="time" name="time">
+            <span class="error-msg">Informe a hora.</span>
           </label>
           <label class="field col-2">
             <span>Valor</span>
             <div class="input-prefix">
               <span>R$</span>
-              <input type="text" placeholder="100,00">
+              <input type="text" name="value" placeholder="100,00">
             </div>
           </label>
         </form>
       </div>
     </section>
 
+    <!-- NOVO PACOTE -->
     <section class="screen" id="screen-package">
       <div class="container">
         <header class="topbar">
@@ -159,20 +176,20 @@
             <i class="fa-solid fa-arrow-left"></i> Novo Pacote
           </button>
           <div class="actions">
-            <button type="button" class="btn btn-primary save-feedback">Salvar</button>
+            <button type="button" class="btn btn-primary" id="btn-save-package">Salvar</button>
             <button type="button" class="btn btn-secondary nav-link" data-target="screen-home">Cancelar</button>
           </div>
         </header>
-
-        <form class="content stack-form two-col">
+        <form class="content stack-form two-col" id="form-package" novalidate>
           <label class="field col-2">
-            <span>Cliente</span>
-            <select>
-              <option>Selecionar cliente</option>
+            <span>Cliente <span class="required-mark">*</span></span>
+            <select name="patient">
+              <option value="">Selecionar cliente</option>
               <option>Ana Souza</option>
               <option>Carlos Lima</option>
               <option>Patrícia Gomes</option>
             </select>
+            <span class="error-msg">Selecione o cliente.</span>
           </label>
 
           <div class="section-block col-2">
@@ -180,12 +197,12 @@
             <div class="row-gap">
               <span class="muted">Repetir a cada</span>
               <div class="inline-group">
-                <select>
+                <select name="freq-num">
                   <option>1</option>
                   <option>2</option>
                   <option>3</option>
                 </select>
-                <select>
+                <select name="freq-unit">
                   <option>semana(s)</option>
                   <option>mês(es)</option>
                 </select>
@@ -194,33 +211,30 @@
             <div class="row-gap">
               <span class="muted">Dias</span>
               <div class="weekdays">
-                <label><input type="checkbox"> <span>M</span></label>
-                <label><input type="checkbox"> <span>T</span></label>
-                <label><input type="checkbox"> <span>W</span></label>
-                <label><input type="checkbox"> <span>T</span></label>
-                <label><input type="checkbox"> <span>F</span></label>
-                <label><input type="checkbox"> <span>S</span></label>
-                <label><input type="checkbox"> <span>S</span></label>
+                <label><input type="checkbox" value="dom"> <span>Dom</span></label>
+                <label><input type="checkbox" value="seg"> <span>Seg</span></label>
+                <label><input type="checkbox" value="ter"> <span>Ter</span></label>
+                <label><input type="checkbox" value="qua"> <span>Qua</span></label>
+                <label><input type="checkbox" value="qui"> <span>Qui</span></label>
+                <label><input type="checkbox" value="sex"> <span>Sex</span></label>
+                <label><input type="checkbox" value="sab"> <span>Sáb</span></label>
               </div>
             </div>
           </div>
 
           <label class="field">
             <span>Hora</span>
-            <div class="input-icon">
-              <input type="text" placeholder="14:00">
-              <i class="fa-regular fa-clock"></i>
-            </div>
+            <input type="time" name="time">
           </label>
           <label class="field">
             <span>Quantidade de sessões</span>
-            <input type="text" placeholder="10">
+            <input type="number" name="qty" placeholder="10" min="1">
           </label>
           <label class="field col-2">
             <span>Valor total</span>
             <div class="input-prefix">
               <span>R$</span>
-              <input type="text" placeholder="1000,00">
+              <input type="text" name="total" placeholder="1000,00">
             </div>
           </label>
 
@@ -232,7 +246,7 @@
 
           <label class="field col-2">
             <span>Número de parcelas</span>
-            <select>
+            <select name="installments">
               <option>3</option>
               <option>6</option>
               <option>10</option>
@@ -242,43 +256,34 @@
           <div class="field col-2">
             <span>Datas de pagamento</span>
             <div class="stack-mini">
-              <div class="input-icon">
-                <input type="text" placeholder="01.04.2026">
-                <i class="fa-regular fa-calendar"></i>
-              </div>
-              <div class="input-icon">
-                <input type="text" placeholder="01.05.2026">
-                <i class="fa-regular fa-calendar"></i>
-              </div>
-              <div class="input-icon">
-                <input type="text" placeholder="01.06.2026">
-                <i class="fa-regular fa-calendar"></i>
-              </div>
+              <input type="date" name="pay-date-1">
+              <input type="date" name="pay-date-2">
+              <input type="date" name="pay-date-3">
             </div>
           </div>
         </form>
       </div>
     </section>
 
+    <!-- PAGAMENTOS -->
     <section class="screen" id="screen-payments">
       <div class="container">
         <header class="topbar">
           <button type="button" class="link-back nav-link" data-target="screen-home">
             <i class="fa-solid fa-arrow-left"></i> Pagamentos
           </button>
+          <button type="button" class="btn btn-primary" id="btn-save-payments">Salvar alterações</button>
         </header>
-
         <div class="content stack-form">
           <label class="field">
             <span>Cliente</span>
-            <select>
-              <option>Selecionar cliente</option>
-              <option>Ana Souza</option>
-              <option>Carlos Lima</option>
-              <option>Patrícia Gomes</option>
+            <select id="payments-patient-select">
+              <option value="">Selecionar cliente</option>
+              <option value="1">Ana Souza</option>
+              <option value="2">Carlos Lima</option>
+              <option value="3">Patrícia Gomes</option>
             </select>
           </label>
-
           <div class="table-wrapper">
             <table class="payments-table">
               <thead>
@@ -290,42 +295,9 @@
                   <th>Observação</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="payments-table-body">
                 <tr>
-                  <td>12.03</td>
-                  <td>Spot</td>
-                  <td>R$ 100</td>
-                  <td>
-                    <select class="status-select">
-                      <option selected>Pendente</option>
-                      <option>Pago</option>
-                    </select>
-                  </td>
-                  <td><input type="text" placeholder="Adicionar nota"></td>
-                </tr>
-                <tr>
-                  <td>19.03</td>
-                  <td>Pacote</td>
-                  <td>R$ 100</td>
-                  <td>
-                    <select class="status-select">
-                      <option>Pendente</option>
-                      <option selected>Pago</option>
-                    </select>
-                  </td>
-                  <td><input type="text" placeholder="Adicionar nota"></td>
-                </tr>
-                <tr>
-                  <td>26.03</td>
-                  <td>Pacote</td>
-                  <td>R$ 100</td>
-                  <td>
-                    <select class="status-select">
-                      <option selected>Pendente</option>
-                      <option>Pago</option>
-                    </select>
-                  </td>
-                  <td><input type="text" placeholder="Adicionar nota"></td>
+                  <td colspan="5" class="table-empty">Selecione um cliente para ver os pagamentos.</td>
                 </tr>
               </tbody>
             </table>
@@ -334,6 +306,7 @@
       </div>
     </section>
 
+    <!-- REMARCAR SESSÃO -->
     <section class="screen" id="screen-reschedule">
       <div class="container">
         <header class="topbar">
@@ -341,42 +314,244 @@
             <i class="fa-solid fa-arrow-left"></i> Remarcar Sessão
           </button>
         </header>
-
-        <form class="content stack-form two-col">
+        <form class="content stack-form two-col" id="form-reschedule" novalidate>
           <label class="field col-2">
-            <span>Cliente</span>
-            <select>
-              <option>Selecionar cliente</option>
-              <option>Ana Souza</option>
-              <option>Carlos Lima</option>
-              <option>Patrícia Gomes</option>
+            <span>Cliente <span class="required-mark">*</span></span>
+            <select name="patient" id="reschedule-patient-select">
+              <option value="">Selecionar cliente</option>
+              <option value="1">Ana Souza</option>
+              <option value="2">Carlos Lima</option>
+              <option value="3">Patrícia Gomes</option>
             </select>
+            <span class="error-msg">Selecione o cliente.</span>
           </label>
-
-          <div class="section-block col-2">
-            <p class="muted">Sessão atual: <strong>12.03.2026 - 14:00</strong></p>
+          <div class="section-block col-2" id="reschedule-current-session">
+            <p class="muted">Selecione um cliente para ver a próxima sessão.</p>
           </div>
-
           <label class="field">
-            <span>Nova data</span>
-            <div class="input-icon">
-              <input type="text" placeholder="15.03.2026">
-              <i class="fa-regular fa-calendar"></i>
-            </div>
+            <span>Nova data <span class="required-mark">*</span></span>
+            <input type="date" name="new-date">
+            <span class="error-msg">Informe a nova data.</span>
           </label>
           <label class="field">
-            <span>Nova hora</span>
-            <div class="input-icon">
-              <input type="text" placeholder="16:00">
-              <i class="fa-regular fa-clock"></i>
-            </div>
+            <span>Nova hora <span class="required-mark">*</span></span>
+            <input type="time" name="new-time">
+            <span class="error-msg">Informe a nova hora.</span>
           </label>
           <div class="col-2 align-right">
-            <button type="button" class="btn btn-primary save-feedback">Confirmar</button>
+            <button type="button" class="btn btn-primary" id="btn-save-reschedule">Confirmar remarcação</button>
           </div>
         </form>
       </div>
     </section>
+
+    <!-- CANCELAR SESSÃO -->
+    <section class="screen" id="screen-cancel-session">
+      <div class="container">
+        <header class="topbar">
+          <button type="button" class="link-back nav-link" data-target="screen-home">
+            <i class="fa-solid fa-arrow-left"></i> Cancelar Sessão
+          </button>
+        </header>
+        <form class="content stack-form two-col" id="form-cancel" novalidate>
+          <label class="field col-2">
+            <span>Cliente <span class="required-mark">*</span></span>
+            <select name="patient" id="cancel-patient-select">
+              <option value="">Selecionar cliente</option>
+              <option value="1">Ana Souza</option>
+              <option value="2">Carlos Lima</option>
+              <option value="3">Patrícia Gomes</option>
+            </select>
+            <span class="error-msg">Selecione o cliente.</span>
+          </label>
+          <div class="section-block col-2" id="cancel-current-session">
+            <p class="muted">Selecione um cliente para ver a próxima sessão.</p>
+          </div>
+          <label class="field col-2">
+            <span>Motivo do cancelamento</span>
+            <select name="reason">
+              <option>Solicitação do paciente</option>
+              <option>Solicitação do profissional</option>
+              <option>Feriado</option>
+              <option>Emergência</option>
+              <option>Outro</option>
+            </select>
+          </label>
+          <label class="field col-2">
+            <span>Observação</span>
+            <textarea rows="3" name="notes" placeholder="Detalhes sobre o cancelamento..."></textarea>
+          </label>
+          <div class="col-2 align-right">
+            <button type="button" class="btn btn-danger" id="btn-cancel-session">Cancelar Sessão</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- LISTA DE PACIENTES -->
+    <section class="screen" id="screen-patients-list">
+      <div class="container">
+        <header class="topbar">
+          <button type="button" class="link-back nav-link" data-target="screen-home">
+            <i class="fa-solid fa-arrow-left"></i> Lista de Pacientes
+          </button>
+          <button type="button" class="btn btn-primary nav-link" data-target="screen-patient">+ Novo Paciente</button>
+        </header>
+        <div class="content stack-form">
+          <label class="field">
+            <input type="text" id="patient-search" placeholder="Buscar paciente pelo nome...">
+          </label>
+          <div class="table-wrapper">
+            <table class="patients-table">
+              <thead>
+                <tr>
+                  <th>Nome</th>
+                  <th>Telefone</th>
+                  <th>Email</th>
+                  <th>Próxima sessão</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="patients-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PERFIL DO PACIENTE -->
+    <section class="screen" id="screen-patient-profile">
+      <div class="container">
+        <header class="topbar">
+          <button type="button" class="link-back nav-link" data-target="screen-patients-list">
+            <i class="fa-solid fa-arrow-left"></i> <span id="profile-back-label">Paciente</span>
+          </button>
+          <button type="button" class="btn btn-secondary" id="btn-edit-patient">Editar</button>
+        </header>
+        <div class="content">
+          <div class="profile-header">
+            <div class="avatar" id="profile-avatar"></div>
+            <div>
+              <h2 id="profile-name"></h2>
+              <p class="muted" id="profile-contact"></p>
+            </div>
+          </div>
+          <div id="profile-notes-block"></div>
+          <h3 class="section-title">Histórico de Sessões</h3>
+          <div class="table-wrapper">
+            <table class="payments-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Hora</th>
+                  <th>Tipo</th>
+                  <th>Valor</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="profile-sessions-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AGENDA -->
+    <section class="screen" id="screen-agenda">
+      <div class="container">
+        <header class="topbar">
+          <button type="button" class="link-back nav-link" data-target="screen-home">
+            <i class="fa-solid fa-arrow-left"></i> Agenda
+          </button>
+          <button type="button" class="btn btn-primary nav-link" data-target="screen-session">+ Nova Sessão</button>
+        </header>
+        <div class="content">
+          <p class="eyebrow" style="margin-bottom:16px">Semana de 04 a 10 de maio de 2026</p>
+          <div id="agenda-container"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- MEU PERFIL (PSICÓLOGO) -->
+    <section class="screen" id="screen-profile">
+      <div class="container">
+        <header class="topbar">
+          <button type="button" class="link-back nav-link" data-target="screen-home">
+            <i class="fa-solid fa-arrow-left"></i> Meu Perfil
+          </button>
+          <div class="actions">
+            <button type="button" class="btn btn-primary" id="btn-save-profile">Salvar</button>
+            <button type="button" class="btn btn-secondary nav-link" data-target="screen-home">Cancelar</button>
+          </div>
+        </header>
+        <form class="content stack-form two-col" id="form-profile">
+          <label class="field">
+            <span>Nome</span>
+            <input type="text" name="name" value="Dra. Maria Silva">
+          </label>
+          <label class="field">
+            <span>CRP</span>
+            <input type="text" name="crp" value="06/123456">
+          </label>
+          <label class="field">
+            <span>Telefone</span>
+            <input type="tel" name="phone" value="(11) 99876-5432">
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input type="email" name="email" value="maria.silva@psicologia.com">
+          </label>
+          <label class="field col-2">
+            <span>Endereço do consultório</span>
+            <input type="text" name="address" value="Rua das Flores, 123 – Sala 45 – São Paulo, SP">
+          </label>
+          <label class="field">
+            <span>Valor padrão da sessão</span>
+            <div class="input-prefix">
+              <span>R$</span>
+              <input type="text" name="session-value" value="150,00">
+            </div>
+          </label>
+          <label class="field">
+            <span>Duração da sessão</span>
+            <select name="session-duration">
+              <option>45 minutos</option>
+              <option selected>50 minutos</option>
+              <option>60 minutos</option>
+            </select>
+          </label>
+        </form>
+      </div>
+    </section>
+
+    <!-- TELA DE SUCESSO (genérica) -->
+    <section class="screen" id="screen-success">
+      <div class="container">
+        <div class="content success-view">
+          <div class="success-icon"><i class="fa-solid fa-check"></i></div>
+          <h2 id="success-title">Operação realizada!</h2>
+          <p class="muted" id="success-subtitle">Os dados foram salvos com sucesso.</p>
+          <div class="detail-card" id="success-details"></div>
+          <div class="success-actions">
+            <button type="button" class="btn btn-primary nav-link" data-target="screen-home">Voltar ao Painel</button>
+            <button type="button" class="btn btn-secondary" id="success-secondary-btn">Nova ação</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- end app-shell -->
+
+  <!-- MODAL DE CONFIRMAÇÃO -->
+  <div class="modal-overlay" id="modal-confirm">
+    <div class="modal">
+      <h3 id="modal-title">Confirmar ação</h3>
+      <p id="modal-body">Tem certeza?</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" id="modal-btn-no">Voltar</button>
+        <button type="button" class="btn btn-danger" id="modal-btn-yes">Confirmar</button>
+      </div>
+    </div>
   </div>
 
   <div class="toast" id="toast">Ação simulada com sucesso.</div>
