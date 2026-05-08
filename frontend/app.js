@@ -557,10 +557,24 @@ $(function () {
         <td><strong>${p.nome}</strong></td>
         <td>${p.telefone || '—'}</td>
         <td>${p.email   || '—'}</td>
-        <td>—</td>
+        <td class="next-session-cell" data-pid="${p.id}">—</td>
         <td><button class="btn-link">Ver perfil</button></td>
       </tr>
     `).join(''));
+
+    list.forEach(async p => {
+      try {
+        const sessoes = await apiFetch(`/sessoes/cliente/${p.id}`);
+        const proxima = sessoes.find(s => s.status === 'pendente');
+        const $cell = $(`.next-session-cell[data-pid="${p.id}"]`);
+        if (proxima) {
+          const dt  = proxima.dt_sessao.replace('T', ' ');
+          const dia  = formatDate(dt.split(' ')[0]);
+          const hora = dt.split(' ')[1]?.slice(0, 5) || '';
+          $cell.text(`${dia} ${hora}`);
+        }
+      } catch {}
+    });
   }
 
   $('#patient-search').on('input', function () {
