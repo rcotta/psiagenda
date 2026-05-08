@@ -562,6 +562,20 @@ textarea {
 }
 
 /* ── Agenda ──────────────────────────────────────── */
+.agenda-week-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.agenda-week-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  min-width: 120px;
+  text-align: center;
+}
+
 .agenda-day { margin-bottom: 28px; }
 
 .agenda-day-label {

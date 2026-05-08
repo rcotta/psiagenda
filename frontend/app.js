@@ -626,12 +626,54 @@ $(function () {
   }
 
   // ── Agenda ───────────────────────────────────────────────────────────────
+  function isoMonday(date) {
+    const d = new Date(date);
+    const dow = d.getDay();
+    d.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
+    d.setHours(0, 0, 0, 0);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function showAgendaWeek(iso) {
+    history.pushState({ screen: 'screen-agenda' }, '', `/agenda?semana=${iso}`);
+    renderAgenda();
+  }
+
   async function renderAgenda() {
-    const { inicio, fim } = semanaAtual();
+    const params  = new URLSearchParams(location.search);
+    const semana  = params.get('semana');
+    const todayIso = isoMonday(new Date());
+
+    let iso = semana && /^\d{4}-\d{2}-\d{2}$/.test(semana) ? semana : null;
+    if (!iso) {
+      iso = todayIso;
+      history.replaceState({ screen: 'screen-agenda' }, '', `/agenda?semana=${iso}`);
+    }
+
+    const monday = new Date(iso + 'T12:00:00');
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+    const fim    = new Date(monday); fim.setDate(monday.getDate() + 7);
+
+    const fmt = d => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const prevIso = (() => { const d = new Date(monday); d.setDate(d.getDate() - 7); return d.toISOString().slice(0, 10); })();
+    const nextIso = (() => { const d = new Date(monday); d.setDate(d.getDate() + 7); return d.toISOString().slice(0, 10); })();
+
+    $('#agenda-nav').html(`
+      <div class="agenda-week-nav">
+        <button class="btn btn-secondary btn-sm" id="btn-agenda-prev">&lt;</button>
+        <span class="agenda-week-label">${fmt(monday)} – ${fmt(sunday)}</span>
+        <button class="btn btn-secondary btn-sm" id="btn-agenda-next">&gt;</button>
+        ${iso !== todayIso ? '<button class="btn btn-secondary btn-sm" id="btn-agenda-today">Semana atual</button>' : ''}
+      </div>
+    `);
+    $('#btn-agenda-prev').on('click', () => showAgendaWeek(prevIso));
+    $('#btn-agenda-next').on('click', () => showAgendaWeek(nextIso));
+    $('#btn-agenda-today').on('click', () => showAgendaWeek(todayIso));
+
     $('#agenda-container').html('<p class="muted">Carregando...</p>');
     try {
       const sessoes = await apiFetch(
-        `/sessoes/agenda?inicio=${inicio.toISOString()}&fim=${fim.toISOString()}`
+        `/sessoes/agenda?inicio=${monday.toISOString()}&fim=${fim.toISOString()}`
       );
       if (!sessoes.length) {
         $('#agenda-container').html('<p class="muted">Nenhuma sessão esta semana.</p>');
@@ -719,10 +761,7 @@ $(function () {
       activateScreen('screen-login');
     }
     const activeId = $('.screen.active').attr('id');
-    const activePath = activeId === 'screen-patient-profile' && state.currentPatientId
-      ? `/pacientes/${state.currentPatientId}`
-      : (SCREEN_PATH[activeId] || location.pathname);
-    history.replaceState({ screen: activeId, patientId: state.currentPatientId }, '', activePath);
+    history.replaceState({ screen: activeId, patientId: state.currentPatientId }, '', location.pathname + location.search);
   })();
 
 });
