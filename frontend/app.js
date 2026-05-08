@@ -344,12 +344,13 @@ $(function () {
     const $date    = $('[name="new-date"]', '#form-reschedule');
     const $time    = $('[name="new-time"]', '#form-reschedule');
 
-    const sessaoId = $patient.data('sessao-id');
+    const sessaoId = $('#reschedule-session-select').val();
     if (!sessaoId) { showToast('Selecione um cliente com sessão agendada.'); return; }
     if (!validate([['Nova data', $date], ['Nova hora', $time]])) return;
 
-    const dtStr = $date.val() + 'T' + ($time.val() || '00:00');
-    const nome  = $patient.data('cliente-nome') || $patient.find('option:selected').text();
+    const dtStr     = $date.val() + 'T' + ($time.val() || '00:00');
+    const nome      = $patient.data('cliente-nome') || $patient.find('option:selected').text();
+    const sessaoLabel = $('#reschedule-session-select option:selected').text();
     try {
       await apiFetch(`/sessoes/${sessaoId}/reagendar`, {
         method: 'PUT',
@@ -360,6 +361,7 @@ $(function () {
         subtitle: 'A sessão foi remarcada com sucesso.',
         details: [
           ['Paciente',  nome],
+          ['Sessão',    sessaoLabel],
           ['Nova data', formatDate($date.val())],
           ['Nova hora', $time.val()],
         ],
@@ -367,7 +369,7 @@ $(function () {
         secondaryTarget: 'screen-reschedule',
       });
       $('#form-reschedule')[0].reset();
-      $('#reschedule-current-session').html('<p class="muted">Selecione um cliente para ver a próxima sessão.</p>');
+      $('#reschedule-current-session').html('<p class="muted">Selecione um cliente para ver as sessões.</p>');
     } catch (err) {
       showToast(err.message || 'Erro ao remarcar sessão.');
     }
@@ -440,30 +442,34 @@ $(function () {
     showToast('Edição de paciente em desenvolvimento.');
   });
 
-  // ── Dynamic: seleção de paciente → próxima sessão ────────────────────────
+  // ── Dynamic: seleção de paciente → sessões para remarcar ─────────────────
   $('#reschedule-patient-select').on('change', async function () {
     const id   = $(this).val();
     const nome = $(this).find('option:selected').text();
     if (!id) {
-      $('#reschedule-current-session').html('<p class="muted">Selecione um cliente para ver a próxima sessão.</p>');
-      $(this).data({ 'sessao-id': null, 'cliente-nome': '' });
+      $('#reschedule-current-session').html('<p class="muted">Selecione um cliente para ver as sessões.</p>');
+      $(this).data('cliente-nome', '');
       return;
     }
     $(this).data('cliente-nome', nome);
     try {
-      const sessoes = await apiFetch(`/sessoes/cliente/${id}`);
-      const proxima = sessoes.find(s => s.status === 'pendente');
-      if (proxima) {
-        const dt   = proxima.dt_sessao.replace('T', ' ');
-        const dia  = formatDate(dt.split(' ')[0]);
-        const hora = dt.split(' ')[1]?.slice(0, 5) || '';
-        $('#reschedule-current-session').html(
-          `<p class="muted">Próxima sessão: <strong>${dia} – ${hora}</strong></p>`
-        );
-        $(this).data('sessao-id', proxima.id);
+      const sessoes   = await apiFetch(`/sessoes/cliente/${id}`);
+      const pendentes = sessoes.filter(s => s.status === 'pendente');
+      if (pendentes.length) {
+        const opts = pendentes.map(s => {
+          const dt  = s.dt_sessao.replace('T', ' ');
+          const dia  = formatDate(dt.split(' ')[0]);
+          const hora = dt.split(' ')[1]?.slice(0, 5) || '';
+          return `<option value="${s.id}">${dia} – ${hora}</option>`;
+        }).join('');
+        $('#reschedule-current-session').html(`
+          <label class="field col-2">
+            <span>Sessão a remarcar</span>
+            <select id="reschedule-session-select">${opts}</select>
+          </label>
+        `);
       } else {
         $('#reschedule-current-session').html('<p class="muted">Nenhuma sessão agendada para este paciente.</p>');
-        $(this).data('sessao-id', null);
       }
     } catch (err) {
       showToast('Erro ao carregar sessões.');
