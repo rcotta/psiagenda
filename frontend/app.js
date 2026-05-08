@@ -275,20 +275,40 @@ $(function () {
   });
 
   // ── Save: Pagamentos ─────────────────────────────────────────────────────
-  $('#btn-save-payments').on('click', function () {
+  $('#btn-save-payments').on('click', async function () {
     const patientId = $('#payments-patient-select').val();
     if (!patientId) { showToast('Selecione um cliente primeiro.'); return; }
-    const p = patientById(patientId);
-    showSuccess({
-      title: 'Pagamentos atualizados!',
-      subtitle: 'Os status foram salvos com sucesso.',
-      details: [
-        ['Paciente',   p.name],
-        ['Registros',  p.payments.length + ' pagamento(s)'],
-      ],
-      secondaryLabel: 'Ver pagamentos',
-      secondaryTarget: 'screen-payments',
-    });
+
+    const rows = $('#payments-table-body tr[data-pag-id]');
+    if (!rows.length) { showToast('Nenhum pagamento para salvar.'); return; }
+
+    const updates = rows.map((_, tr) => {
+      const $tr    = $(tr);
+      const id     = $tr.data('pag-id');
+      const status = $tr.find('.status-select').val();
+      const notas  = $tr.find('.pag-notas').val() || null;
+      return apiFetch(`/pagamentos/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status, notas }),
+      });
+    }).get();
+
+    try {
+      await Promise.all(updates);
+      const nome = $('#payments-patient-select option:selected').text();
+      showSuccess({
+        title: 'Pagamentos atualizados!',
+        subtitle: 'Os status foram salvos com sucesso.',
+        details: [
+          ['Paciente',   nome],
+          ['Registros',  rows.length + ' pagamento(s)'],
+        ],
+        secondaryLabel: 'Ver pagamentos',
+        secondaryTarget: 'screen-payments',
+      });
+    } catch (err) {
+      showToast(err.message || 'Erro ao salvar pagamentos.');
+    }
   });
 
   // ── Save: Remarcar Sessão ────────────────────────────────────────────────
@@ -453,27 +473,37 @@ $(function () {
   });
 
   // ── Dynamic: pagamentos por paciente ────────────────────────────────────
-  $('#payments-patient-select').on('change', function () {
-    const p = patientById($(this).val());
+  $('#payments-patient-select').on('change', async function () {
+    const id     = $(this).val();
     const $tbody = $('#payments-table-body');
-    if (!p) {
+    if (!id) {
       $tbody.html('<tr><td colspan="5" class="table-empty">Selecione um cliente para ver os pagamentos.</td></tr>');
       return;
     }
-    $tbody.html(p.payments.map(pay => `
-      <tr>
-        <td>${pay.date}</td>
-        <td>${pay.type}</td>
-        <td>${pay.value}</td>
-        <td>
-          <select class="status-select">
-            <option ${pay.status === 'Pendente' ? 'selected' : ''}>Pendente</option>
-            <option ${pay.status === 'Pago'     ? 'selected' : ''}>Pago</option>
-          </select>
-        </td>
-        <td><input type="text" placeholder="Adicionar nota"></td>
-      </tr>
-    `).join(''));
+    try {
+      const pagamentos = await apiFetch(`/pagamentos/cliente/${id}`);
+      if (!pagamentos.length) {
+        $tbody.html('<tr><td colspan="5" class="table-empty">Nenhum pagamento encontrado para este cliente.</td></tr>');
+        return;
+      }
+      $tbody.html(pagamentos.map(pag => `
+        <tr data-pag-id="${pag.id}" data-status-orig="${pag.status}">
+          <td>${pag.dt_vencimento ? formatDate(pag.dt_vencimento) : '—'}</td>
+          <td>${pag.tipo_sessao || '—'}</td>
+          <td>R$ ${pag.valor ?? '—'}</td>
+          <td>
+            <select class="status-select">
+              <option value="pendente"  ${pag.status === 'pendente'  ? 'selected' : ''}>Pendente</option>
+              <option value="realizado" ${pag.status === 'realizado' ? 'selected' : ''}>Pago</option>
+              <option value="cancelado" ${pag.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+            </select>
+          </td>
+          <td><input type="text" class="pag-notas" placeholder="Adicionar nota" value="${pag.notas || ''}"></td>
+        </tr>
+      `).join(''));
+    } catch (err) {
+      showToast('Erro ao carregar pagamentos.');
+    }
   });
 
   // ── Lista de Pacientes ───────────────────────────────────────────────────
