@@ -4,7 +4,6 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 
 from database import init_db
 from routers import auth, clientes, pagamentos, sessoes, usuario
@@ -33,8 +32,10 @@ app.include_router(clientes.router,   prefix="/clientes")
 app.include_router(sessoes.router,    prefix="/sessoes")
 app.include_router(pagamentos.router, prefix="/pagamentos")
 
-@app.get("/", include_in_schema=False)
-def root():
+@app.get("/{full_path:path}", include_in_schema=False)
+def spa_fallback(full_path: str):
+    if full_path:
+        file = (FRONTEND_DIR / full_path).resolve()
+        if file.is_file() and file.is_relative_to(FRONTEND_DIR.resolve()):
+            return FileResponse(file)
     return FileResponse(FRONTEND_DIR / "index.html")
-
-app.mount("/", StaticFiles(directory=FRONTEND_DIR), name="frontend")

@@ -1,5 +1,23 @@
 $(function () {
 
+  state.currentPatientId = null;
+
+  const SCREEN_PATH = {
+    'screen-login':          '/login',
+    'screen-home':           '/',
+    'screen-patient':        '/pacientes/novo',
+    'screen-session':        '/sessoes/nova',
+    'screen-package':        '/pacotes/novo',
+    'screen-payments':       '/pagamentos',
+    'screen-reschedule':     '/sessoes/remarcar',
+    'screen-cancel-session': '/sessoes/cancelar',
+    'screen-patients-list':  '/pacientes',
+    'screen-agenda':         '/agenda',
+    'screen-profile':        '/perfil',
+  };
+
+  const PATH_SCREEN = Object.fromEntries(Object.entries(SCREEN_PATH).map(([s, p]) => [p, s]));
+
   // ── Helpers de data ─────────────────────────────────────────────────────
 
   const DIAS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -34,7 +52,7 @@ $(function () {
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
-  function showScreen(id) {
+  function activateScreen(id) {
     $('.screen').removeClass('active');
     $('#' + id).addClass('active');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -43,6 +61,15 @@ $(function () {
     if (id === 'screen-profile')       fillProfileForm();
     const screensComClientes = ['screen-session', 'screen-package', 'screen-reschedule', 'screen-cancel-session', 'screen-payments'];
     if (screensComClientes.includes(id)) fillClienteSelects();
+  }
+
+  function showScreen(id) {
+    activateScreen(id);
+    if (id === 'screen-success') return;
+    const path = id === 'screen-patient-profile' && state.currentPatientId
+      ? `/pacientes/${state.currentPatientId}`
+      : (SCREEN_PATH[id] || '/');
+    history.pushState({ screen: id, patientId: state.currentPatientId }, '', path);
   }
 
   function showToast(msg) {
@@ -540,7 +567,8 @@ $(function () {
   });
 
   // ── Perfil do Paciente ───────────────────────────────────────────────────
-  async function openPatientProfile(id) {
+  async function openPatientProfile(id, { pushHistory = true } = {}) {
+    state.currentPatientId = id;
     try {
       const [cliente, sessoes] = await Promise.all([
         apiFetch(`/clientes/${id}`),
@@ -568,7 +596,10 @@ $(function () {
           }).join('')
         : '<tr><td colspan="5" class="table-empty">Nenhuma sessão registrada.</td></tr>'
       );
-      showScreen('screen-patient-profile');
+      activateScreen('screen-patient-profile');
+      if (pushHistory) {
+        history.pushState({ screen: 'screen-patient-profile', patientId: id }, '', `/pacientes/${id}`);
+      }
     } catch (err) {
       showToast(err.message || 'Erro ao carregar perfil do paciente.');
     }
@@ -633,5 +664,45 @@ $(function () {
     await fillClienteSelects();
     $('#cancel-patient-select').val(id).trigger('change');
   });
+
+  // ── Roteamento por path ──────────────────────────────────────────────────
+  async function navigateToPath(path) {
+    const m = path.match(/^\/pacientes\/(\d+)$/);
+    if (m) { await openPatientProfile(+m[1], { pushHistory: false }); return; }
+    const screen = PATH_SCREEN[path];
+    activateScreen(screen || (state.token ? 'screen-home' : 'screen-login'));
+  }
+
+  window.addEventListener('popstate', async function (e) {
+    const { screen, patientId } = e.state || {};
+    if (screen === 'screen-patient-profile' && patientId) {
+      await openPatientProfile(patientId, { pushHistory: false });
+    } else if (screen) {
+      activateScreen(screen);
+    } else {
+      await navigateToPath(location.pathname);
+    }
+  });
+
+  (async function init() {
+    if (state.token) {
+      try {
+        state.usuario = await apiFetch('/usuarios/me');
+        $('#home-greeting-name').text(state.usuario.nome);
+        await navigateToPath(location.pathname);
+      } catch {
+        state.token = null;
+        localStorage.removeItem('psiagenda_token');
+        activateScreen('screen-login');
+      }
+    } else {
+      activateScreen('screen-login');
+    }
+    const activeId = $('.screen.active').attr('id');
+    const activePath = activeId === 'screen-patient-profile' && state.currentPatientId
+      ? `/pacientes/${state.currentPatientId}`
+      : (SCREEN_PATH[activeId] || location.pathname);
+    history.replaceState({ screen: activeId, patientId: state.currentPatientId }, '', activePath);
+  })();
 
 });
