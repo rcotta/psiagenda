@@ -1,54 +1,6 @@
 $(function () {
 
-  // ── Mock data ────────────────────────────────────────────────────────────
-  const patients = [
-    {
-      id: 1, name: 'Ana Souza', phone: '(11) 91234-5678', email: 'ana.souza@email.com',
-      notes: 'Paciente desde jan/2025. Ansiedade generalizada.',
-      nextSession: '14.05.2026 – 14:00',
-      payments: [
-        { date: '12.03', type: 'Spot',   value: 'R$ 100', status: 'Pendente' },
-        { date: '19.03', type: 'Pacote', value: 'R$ 100', status: 'Pendente' },
-        { date: '26.03', type: 'Pacote', value: 'R$ 100', status: 'Pendente' },
-      ],
-      sessions: [
-        { date: '12.03.2026', time: '14:00', type: 'Spot',   value: 'R$ 100', status: 'realizada' },
-        { date: '19.03.2026', time: '14:00', type: 'Pacote', value: 'R$ 100', status: 'realizada' },
-        { date: '26.03.2026', time: '14:00', type: 'Pacote', value: 'R$ 100', status: 'realizada' },
-        { date: '14.05.2026', time: '14:00', type: 'Pacote', value: 'R$ 100', status: 'agendada'  },
-      ],
-    },
-    {
-      id: 2, name: 'Carlos Lima', phone: '(21) 98765-4321', email: 'carlos.lima@email.com',
-      notes: 'Depressão leve. Terapia cognitivo-comportamental.',
-      nextSession: '15.05.2026 – 09:00',
-      payments: [
-        { date: '10.03', type: 'Spot', value: 'R$ 120', status: 'Pago' },
-        { date: '17.03', type: 'Spot', value: 'R$ 120', status: 'Pago' },
-      ],
-      sessions: [
-        { date: '10.03.2026', time: '09:00', type: 'Spot', value: 'R$ 120', status: 'realizada' },
-        { date: '17.03.2026', time: '09:00', type: 'Spot', value: 'R$ 120', status: 'realizada' },
-        { date: '15.05.2026', time: '09:00', type: 'Spot', value: 'R$ 120', status: 'agendada'  },
-      ],
-    },
-    {
-      id: 3, name: 'Patrícia Gomes', phone: '(31) 97654-3210', email: 'patricia.gomes@email.com',
-      notes: 'Sessões quinzenais. Pacote de 10 sessões.',
-      nextSession: '15.05.2026 – 16:00',
-      payments: [
-        { date: '05.03', type: 'Pacote', value: 'R$ 90', status: 'Pago'     },
-        { date: '19.03', type: 'Pacote', value: 'R$ 90', status: 'Pago'     },
-        { date: '02.04', type: 'Pacote', value: 'R$ 90', status: 'Pendente' },
-      ],
-      sessions: [
-        { date: '05.03.2026', time: '16:00', type: 'Pacote', value: 'R$ 90', status: 'realizada' },
-        { date: '19.03.2026', time: '16:00', type: 'Pacote', value: 'R$ 90', status: 'realizada' },
-        { date: '02.04.2026', time: '16:00', type: 'Pacote', value: 'R$ 90', status: 'realizada' },
-        { date: '15.05.2026', time: '16:00', type: 'Pacote', value: 'R$ 90', status: 'agendada'  },
-      ],
-    },
-  ];
+  // ── Mock data (agenda removida na Fase 4) ────────────────────────────────
 
   const agendaData = [
     { label: 'Segunda, 04/05', sessions: [
@@ -77,6 +29,8 @@ $(function () {
     if (id === 'screen-patients-list') renderPatientList();
     if (id === 'screen-agenda')        renderAgenda();
     if (id === 'screen-profile')       fillProfileForm();
+    const screensComClientes = ['screen-session', 'screen-package', 'screen-reschedule', 'screen-cancel-session', 'screen-payments'];
+    if (screensComClientes.includes(id)) fillClienteSelects();
   }
 
   function showToast(msg) {
@@ -102,7 +56,17 @@ $(function () {
   }
 
   function patientById(id) {
-    return patients.find(p => p.id === +id);
+    return state.clientes.find(p => p.id === +id);
+  }
+
+  async function fillClienteSelects() {
+    if (!state.clientes.length) await loadClientes();
+    const opts = state.clientes.map(c =>
+      `<option value="${c.id}">${c.nome}</option>`
+    ).join('');
+    const blank = '<option value="">Selecionar cliente</option>';
+    $('select[name="patient"]').html(blank + opts);
+    $('#payments-patient-select').html(blank + opts);
   }
 
   function validate(pairs) {
@@ -191,23 +155,36 @@ $(function () {
   });
 
   // ── Save: Cadastro de Paciente ───────────────────────────────────────────
-  $('#btn-save-patient').on('click', function () {
+  $('#btn-save-patient').on('click', async function () {
     const $name  = $('[name="name"]',  '#form-patient');
     const $phone = $('[name="phone"]', '#form-patient');
     if (!validate([['Nome', $name], ['Telefone', $phone]])) return;
-
-    showSuccess({
-      title: 'Paciente cadastrado!',
-      subtitle: 'O cadastro foi salvo com sucesso.',
-      details: [
-        ['Nome',     $name.val()],
-        ['Telefone', $phone.val()],
-        ['Email',    $('[name="email"]', '#form-patient').val() || '—'],
-      ],
-      secondaryLabel: 'Cadastrar outro',
-      secondaryTarget: 'screen-patient',
-    });
-    $('#form-patient')[0].reset();
+    try {
+      const cliente = await apiFetch('/clientes/', {
+        method: 'POST',
+        body: JSON.stringify({
+          nome:     $name.val(),
+          telefone: $phone.val(),
+          email:    $('[name="email"]', '#form-patient').val() || null,
+          notas:    $('[name="notes"]', '#form-patient').val() || null,
+        }),
+      });
+      state.clientes = [];
+      showSuccess({
+        title: 'Paciente cadastrado!',
+        subtitle: 'O cadastro foi salvo com sucesso.',
+        details: [
+          ['Nome',     cliente.nome],
+          ['Telefone', cliente.telefone || '—'],
+          ['Email',    cliente.email    || '—'],
+        ],
+        secondaryLabel: 'Cadastrar outro',
+        secondaryTarget: 'screen-patient',
+      });
+      $('#form-patient')[0].reset();
+    } catch (err) {
+      showToast(err.message || 'Erro ao cadastrar paciente.');
+    }
   });
 
   // ── Save: Nova Sessão ────────────────────────────────────────────────────
@@ -303,27 +280,40 @@ $(function () {
   $('#btn-cancel-session').on('click', function () {
     const $patient = $('#cancel-patient-select');
     if (!validate([['Cliente', $patient]])) return;
+    const sessaoId = $patient.data('sessao-id');
+    if (!sessaoId) { showToast('Nenhuma sessão agendada para cancelar.'); return; }
 
     const p = patientById($patient.val());
+    const infoSessao = $('#cancel-current-session').text().replace('Próxima sessão: ', '').trim();
     showModal({
       title: 'Confirmar cancelamento',
-      body: `Tem certeza que deseja cancelar a sessão de <strong>${p.name}</strong> marcada para <strong>${p.nextSession}</strong>?`,
+      body: `Tem certeza que deseja cancelar a sessão de <strong>${p ? p.nome : ''}</strong> marcada para <strong>${infoSessao}</strong>?`,
       yesLabel: 'Sim, cancelar',
-      onConfirm: () => {
+      onConfirm: async () => {
         const reason = $('[name="reason"]', '#form-cancel').val();
-        showSuccess({
-          title: 'Sessão cancelada!',
-          subtitle: 'O cancelamento foi registrado.',
-          details: [
-            ['Paciente', p.name],
-            ['Sessão',   p.nextSession],
-            ['Motivo',   reason],
-          ],
-          secondaryLabel: 'Cancelar outra',
-          secondaryTarget: 'screen-cancel-session',
-        });
-        $('#form-cancel')[0].reset();
-        $('#cancel-current-session').html('<p class="muted">Selecione um cliente para ver a próxima sessão.</p>');
+        const notas  = $('[name="notes"]',  '#form-cancel').val();
+        const status = reason === 'ausência do paciente' ? 'cancelada_ausencia' : 'cancelada';
+        try {
+          await apiFetch(`/sessoes/${sessaoId}/cancelar`, {
+            method: 'PUT',
+            body: JSON.stringify({ status, notas: notas || null }),
+          });
+          showSuccess({
+            title: 'Sessão cancelada!',
+            subtitle: 'O cancelamento foi registrado.',
+            details: [
+              ['Paciente', p ? p.nome : ''],
+              ['Sessão',   infoSessao],
+              ['Motivo',   reason],
+            ],
+            secondaryLabel: 'Cancelar outra',
+            secondaryTarget: 'screen-cancel-session',
+          });
+          $('#form-cancel')[0].reset();
+          $('#cancel-current-session').html('<p class="muted">Selecione um cliente para ver a próxima sessão.</p>');
+        } catch (err) {
+          showToast(err.message || 'Erro ao cancelar sessão.');
+        }
       },
     });
   });
@@ -355,20 +345,56 @@ $(function () {
   });
 
   // ── Dynamic: seleção de paciente → próxima sessão ────────────────────────
-  $('#reschedule-patient-select').on('change', function () {
-    const p = patientById($(this).val());
-    $('#reschedule-current-session').html(
-      p ? `<p class="muted">Próxima sessão: <strong>${p.nextSession}</strong></p>`
-        : '<p class="muted">Selecione um cliente para ver a próxima sessão.</p>'
-    );
+  $('#reschedule-patient-select').on('change', async function () {
+    const id = $(this).val();
+    if (!id) {
+      $('#reschedule-current-session').html('<p class="muted">Selecione um cliente para ver a próxima sessão.</p>');
+      return;
+    }
+    try {
+      const sessoes = await apiFetch(`/sessoes/cliente/${id}`);
+      const proxima = sessoes.find(s => s.status === 'agendada');
+      if (proxima) {
+        const dt  = proxima.dt_sessao.replace('T', ' ');
+        const dia  = formatDate(dt.split(' ')[0]);
+        const hora = dt.split(' ')[1]?.slice(0, 5) || '';
+        $('#reschedule-current-session').html(
+          `<p class="muted">Próxima sessão: <strong>${dia} – ${hora}</strong></p>`
+        );
+        $('#reschedule-patient-select').data('sessao-id', proxima.id);
+      } else {
+        $('#reschedule-current-session').html('<p class="muted">Nenhuma sessão agendada para este paciente.</p>');
+        $('#reschedule-patient-select').data('sessao-id', null);
+      }
+    } catch (err) {
+      showToast('Erro ao carregar sessões.');
+    }
   });
 
-  $('#cancel-patient-select').on('change', function () {
-    const p = patientById($(this).val());
-    $('#cancel-current-session').html(
-      p ? `<p class="muted">Próxima sessão: <strong>${p.nextSession}</strong></p>`
-        : '<p class="muted">Selecione um cliente para ver a próxima sessão.</p>'
-    );
+  $('#cancel-patient-select').on('change', async function () {
+    const id = $(this).val();
+    if (!id) {
+      $('#cancel-current-session').html('<p class="muted">Selecione um cliente para ver a próxima sessão.</p>');
+      return;
+    }
+    try {
+      const sessoes = await apiFetch(`/sessoes/cliente/${id}`);
+      const proxima = sessoes.find(s => s.status === 'agendada');
+      if (proxima) {
+        const dt   = proxima.dt_sessao.replace('T', ' ');
+        const dia  = formatDate(dt.split(' ')[0]);
+        const hora = dt.split(' ')[1]?.slice(0, 5) || '';
+        $('#cancel-current-session').html(
+          `<p class="muted">Próxima sessão: <strong>${dia} – ${hora}</strong></p>`
+        );
+        $('#cancel-patient-select').data('sessao-id', proxima.id);
+      } else {
+        $('#cancel-current-session').html('<p class="muted">Nenhuma sessão agendada para este paciente.</p>');
+        $('#cancel-patient-select').data('sessao-id', null);
+      }
+    } catch (err) {
+      showToast('Erro ao carregar sessões.');
+    }
   });
 
   // ── Dynamic: pagamentos por paciente ────────────────────────────────────
@@ -396,22 +422,24 @@ $(function () {
   });
 
   // ── Lista de Pacientes ───────────────────────────────────────────────────
-  function renderPatientList(filter) {
+  async function renderPatientList(filter) {
     if (filter === undefined) $('#patient-search').val('');
+    if (!state.clientes.length) {
+      try { await loadClientes(); } catch (err) { showToast('Erro ao carregar pacientes.'); return; }
+    }
     const q    = (filter || '').toLowerCase();
-    const list = q ? patients.filter(p => p.name.toLowerCase().includes(q)) : patients;
+    const list = q ? state.clientes.filter(p => p.nome.toLowerCase().includes(q)) : state.clientes;
     const $tbody = $('#patients-table-body');
-
     if (!list.length) {
       $tbody.html('<tr><td colspan="5" class="table-empty">Nenhum paciente encontrado.</td></tr>');
       return;
     }
     $tbody.html(list.map(p => `
       <tr data-patient-id="${p.id}">
-        <td><strong>${p.name}</strong></td>
-        <td>${p.phone}</td>
-        <td>${p.email}</td>
-        <td>${p.nextSession}</td>
+        <td><strong>${p.nome}</strong></td>
+        <td>${p.telefone || '—'}</td>
+        <td>${p.email   || '—'}</td>
+        <td>—</td>
         <td><button class="btn-link">Ver perfil</button></td>
       </tr>
     `).join(''));
@@ -427,28 +455,38 @@ $(function () {
   });
 
   // ── Perfil do Paciente ───────────────────────────────────────────────────
-  function openPatientProfile(id) {
-    const p = patientById(id);
-    if (!p) return;
-
-    $('#profile-back-label').text(p.name);
-    $('#profile-avatar').text(initials(p.name));
-    $('#profile-name').text(p.name);
-    $('#profile-contact').text(p.phone + '  ·  ' + p.email);
-    $('#profile-notes-block').html(
-      p.notes ? `<div class="notes-block">${p.notes}</div>` : ''
-    );
-    $('#profile-sessions-tbody').html(p.sessions.map(s => `
-      <tr>
-        <td>${s.date}</td>
-        <td>${s.time}</td>
-        <td>${s.type}</td>
-        <td>${s.value}</td>
-        <td>${badge(s.status)}</td>
-      </tr>
-    `).join(''));
-
-    showScreen('screen-patient-profile');
+  async function openPatientProfile(id) {
+    try {
+      const [cliente, sessoes] = await Promise.all([
+        apiFetch(`/clientes/${id}`),
+        apiFetch(`/sessoes/cliente/${id}`),
+      ]);
+      $('#profile-back-label').text(cliente.nome);
+      $('#profile-avatar').text(initials(cliente.nome));
+      $('#profile-name').text(cliente.nome);
+      $('#profile-contact').text([cliente.telefone, cliente.email].filter(Boolean).join('  ·  ') || '—');
+      $('#profile-notes-block').html(
+        cliente.notas ? `<div class="notes-block">${cliente.notas}</div>` : ''
+      );
+      $('#profile-sessions-tbody').html(sessoes.length
+        ? sessoes.map(s => {
+            const dt  = s.dt_sessao.replace('T', ' ');
+            const dia  = dt.split(' ')[0];
+            const hora = dt.split(' ')[1]?.slice(0, 5) || '—';
+            return `<tr>
+              <td>${formatDate(dia)}</td>
+              <td>${hora}</td>
+              <td>${s.tipo || '—'}</td>
+              <td>—</td>
+              <td>${badge(s.status)}</td>
+            </tr>`;
+          }).join('')
+        : '<tr><td colspan="5" class="table-empty">Nenhuma sessão registrada.</td></tr>'
+      );
+      showScreen('screen-patient-profile');
+    } catch (err) {
+      showToast(err.message || 'Erro ao carregar perfil do paciente.');
+    }
   }
 
   // ── Agenda ───────────────────────────────────────────────────────────────
