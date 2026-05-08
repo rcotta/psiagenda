@@ -1,25 +1,37 @@
 $(function () {
 
-  // ── Mock data (agenda removida na Fase 4) ────────────────────────────────
+  // ── Helpers de data ─────────────────────────────────────────────────────
 
-  const agendaData = [
-    { label: 'Segunda, 04/05', sessions: [
-      { time: '09:00', patient: 'Carlos Lima',    type: 'Spot',   value: 'R$ 120', patientId: 2 },
-      { time: '14:00', patient: 'Ana Souza',      type: 'Pacote', value: 'R$ 100', patientId: 1 },
-    ]},
-    { label: 'Terça, 05/05', sessions: [
-      { time: '16:00', patient: 'Patrícia Gomes', type: 'Pacote', value: 'R$ 90',  patientId: 3 },
-    ]},
-    { label: 'Quarta, 06/05', sessions: [
-      { time: '14:00', patient: 'Ana Souza',      type: 'Pacote', value: 'R$ 100', patientId: 1 },
-    ]},
-    { label: 'Quinta, 07/05', sessions: [
-      { time: '09:00', patient: 'Carlos Lima',    type: 'Spot',   value: 'R$ 120', patientId: 2 },
-    ]},
-    { label: 'Sexta, 08/05', sessions: [
-      { time: '16:00', patient: 'Patrícia Gomes', type: 'Pacote', value: 'R$ 90',  patientId: 3 },
-    ]},
-  ];
+  const DIAS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const DIA_VAL = { dom: 0, seg: 1, ter: 2, qua: 3, qui: 4, sex: 5, sab: 6 };
+
+  function semanaAtual() {
+    const hoje = new Date();
+    const dow = hoje.getDay();
+    const inicio = new Date(hoje);
+    inicio.setDate(hoje.getDate() - (dow === 0 ? 6 : dow - 1));
+    inicio.setHours(0, 0, 0, 0);
+    const fim = new Date(inicio);
+    fim.setDate(inicio.getDate() + 7);
+    return { inicio, fim };
+  }
+
+  function gerarDatasRecorrentes(weekdayNums, time, qty) {
+    const [h, m] = (time || '09:00').split(':').map(Number);
+    const datas = [];
+    const cursor = new Date();
+    cursor.setDate(cursor.getDate() + 1);
+    cursor.setHours(0, 0, 0, 0);
+    while (datas.length < qty) {
+      if (weekdayNums.includes(cursor.getDay())) {
+        const dt = new Date(cursor);
+        dt.setHours(h, m, 0, 0);
+        datas.push(dt.toISOString().slice(0, 16));
+      }
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return datas;
+  }
 
   // ── Helpers ──────────────────────────────────────────────────────────────
   function showScreen(id) {
@@ -39,9 +51,9 @@ $(function () {
   }
 
   function badge(status) {
-    const cls   = { pago: 'badge-pago', pendente: 'badge-pendente', agendada: 'badge-agendada', realizada: 'badge-realizada' };
-    const label = { pago: 'Pago', pendente: 'Pendente', agendada: 'Agendada', realizada: 'Realizada' };
-    const key = status.toLowerCase();
+    const cls   = { pendente: 'badge-pendente', finalizada: 'badge-realizada', cancelada: 'badge-cancelada', cancelada_ausencia: 'badge-cancelada', realizado: 'badge-pago' };
+    const label = { pendente: 'Agendada', finalizada: 'Realizada', cancelada: 'Cancelada', cancelada_ausencia: 'Ausência', realizado: 'Pago' };
+    const key = status?.toLowerCase() || '';
     return `<span class="badge ${cls[key] || ''}">${label[key] || status}</span>`;
   }
 
@@ -188,51 +200,78 @@ $(function () {
   });
 
   // ── Save: Nova Sessão ────────────────────────────────────────────────────
-  $('#btn-save-session').on('click', function () {
+  $('#btn-save-session').on('click', async function () {
     const $patient = $('[name="patient"]', '#form-session');
     const $date    = $('[name="date"]',    '#form-session');
     const $time    = $('[name="time"]',    '#form-session');
     if (!validate([['Cliente', $patient], ['Data', $date], ['Hora', $time]])) return;
 
-    const $value = $('[name="value"]', '#form-session');
-    showSuccess({
-      title: 'Sessão agendada!',
-      subtitle: 'A sessão foi agendada com sucesso.',
-      details: [
-        ['Paciente', $patient.val()],
-        ['Data',     formatDate($date.val())],
-        ['Hora',     $time.val()],
-        ['Valor',    $value.val() ? 'R$ ' + $value.val() : '—'],
-      ],
-      secondaryLabel: 'Agendar outra',
-      secondaryTarget: 'screen-session',
-    });
-    $('#form-session')[0].reset();
+    const rawVal = $('[name="value"]', '#form-session').val().replace(',', '.');
+    const valor  = parseFloat(rawVal) || 0;
+    const dtStr  = $date.val() + 'T' + ($time.val() || '00:00');
+    const nome   = $patient.find('option:selected').text();
+    try {
+      await apiFetch('/sessoes/individual', {
+        method: 'POST',
+        body: JSON.stringify({ id_cliente: +$patient.val(), dt_sessao: dtStr, valor }),
+      });
+      showSuccess({
+        title: 'Sessão agendada!',
+        subtitle: 'A sessão foi agendada com sucesso.',
+        details: [
+          ['Paciente', nome],
+          ['Data',     formatDate($date.val())],
+          ['Hora',     $time.val()],
+          ['Valor',    valor ? 'R$ ' + rawVal : '—'],
+        ],
+        secondaryLabel: 'Agendar outra',
+        secondaryTarget: 'screen-session',
+      });
+      $('#form-session')[0].reset();
+    } catch (err) {
+      showToast(err.message || 'Erro ao agendar sessão.');
+    }
   });
 
   // ── Save: Novo Pacote ────────────────────────────────────────────────────
-  $('#btn-save-package').on('click', function () {
+  $('#btn-save-package').on('click', async function () {
     const $patient = $('[name="patient"]', '#form-package');
     if (!validate([['Cliente', $patient]])) return;
 
-    const qty       = $('[name="qty"]', '#form-package').val() || '—';
-    const total     = $('[name="total"]', '#form-package').val();
-    const isAvista  = $('[name="payment-condition"]:checked').val() === 'avista';
-    const condition = isAvista ? 'À vista' : 'Parcelado em ' + $('[name="installments"]', '#form-package').val() + ' vezes';
+    const qty      = parseInt($('[name="qty"]', '#form-package').val()) || 1;
+    const time     = $('[name="time"]', '#form-package').val() || '09:00';
+    const rawTotal = $('[name="total"]', '#form-package').val().replace(',', '.');
+    const valor    = parseFloat(rawTotal) || 0;
+    const nome     = $patient.find('option:selected').text();
 
-    showSuccess({
-      title: 'Pacote criado!',
-      subtitle: 'O pacote foi registrado com sucesso.',
-      details: [
-        ['Paciente',   $patient.val()],
-        ['Sessões',    qty],
-        ['Valor total', total ? 'R$ ' + total : '—'],
-        ['Pagamento',  condition],
-      ],
-      secondaryLabel: 'Criar outro pacote',
-      secondaryTarget: 'screen-package',
-    });
-    $('#form-package')[0].reset();
+    const checkedDays = $('[name^="freq-"] input[type="checkbox"]:checked, #form-package input[type="checkbox"]:checked')
+      .map((_, el) => DIA_VAL[el.value])
+      .get()
+      .filter(v => v !== undefined);
+
+    if (!checkedDays.length) { showToast('Selecione ao menos um dia da semana.'); return; }
+
+    const sessoes = gerarDatasRecorrentes(checkedDays, time, qty);
+    try {
+      await apiFetch('/sessoes/pacote', {
+        method: 'POST',
+        body: JSON.stringify({ id_cliente: +$patient.val(), sessoes, valor }),
+      });
+      showSuccess({
+        title: 'Pacote criado!',
+        subtitle: 'O pacote foi registrado com sucesso.',
+        details: [
+          ['Paciente',    nome],
+          ['Sessões',     qty],
+          ['Valor total', valor ? 'R$ ' + rawTotal : '—'],
+        ],
+        secondaryLabel: 'Criar outro pacote',
+        secondaryTarget: 'screen-package',
+      });
+      $('#form-package')[0].reset();
+    } catch (err) {
+      showToast(err.message || 'Erro ao criar pacote.');
+    }
   });
 
   // ── Save: Pagamentos ─────────────────────────────────────────────────────
@@ -253,41 +292,51 @@ $(function () {
   });
 
   // ── Save: Remarcar Sessão ────────────────────────────────────────────────
-  $('#btn-save-reschedule').on('click', function () {
+  $('#btn-save-reschedule').on('click', async function () {
     const $patient = $('#reschedule-patient-select');
     const $date    = $('[name="new-date"]', '#form-reschedule');
     const $time    = $('[name="new-time"]', '#form-reschedule');
-    if (!validate([['Cliente', $patient], ['Nova data', $date], ['Nova hora', $time]])) return;
 
-    const p = patientById($patient.val());
-    showSuccess({
-      title: 'Sessão remarcada!',
-      subtitle: 'A sessão foi remarcada com sucesso.',
-      details: [
-        ['Paciente',        p ? p.name : $patient.find('option:selected').text()],
-        ['Sessão anterior', p ? p.nextSession : '—'],
-        ['Nova data',       formatDate($date.val())],
-        ['Nova hora',       $time.val()],
-      ],
-      secondaryLabel: 'Remarcar outra',
-      secondaryTarget: 'screen-reschedule',
-    });
-    $('#form-reschedule')[0].reset();
-    $('#reschedule-current-session').html('<p class="muted">Selecione um cliente para ver a próxima sessão.</p>');
+    const sessaoId = $patient.data('sessao-id');
+    if (!sessaoId) { showToast('Selecione um cliente com sessão agendada.'); return; }
+    if (!validate([['Nova data', $date], ['Nova hora', $time]])) return;
+
+    const dtStr = $date.val() + 'T' + ($time.val() || '00:00');
+    const nome  = $patient.data('cliente-nome') || $patient.find('option:selected').text();
+    try {
+      await apiFetch(`/sessoes/${sessaoId}/reagendar`, {
+        method: 'PUT',
+        body: JSON.stringify({ dt_sessao: dtStr }),
+      });
+      showSuccess({
+        title: 'Sessão remarcada!',
+        subtitle: 'A sessão foi remarcada com sucesso.',
+        details: [
+          ['Paciente',  nome],
+          ['Nova data', formatDate($date.val())],
+          ['Nova hora', $time.val()],
+        ],
+        secondaryLabel: 'Remarcar outra',
+        secondaryTarget: 'screen-reschedule',
+      });
+      $('#form-reschedule')[0].reset();
+      $('#reschedule-current-session').html('<p class="muted">Selecione um cliente para ver a próxima sessão.</p>');
+    } catch (err) {
+      showToast(err.message || 'Erro ao remarcar sessão.');
+    }
   });
 
   // ── Cancelar Sessão ──────────────────────────────────────────────────────
   $('#btn-cancel-session').on('click', function () {
     const $patient = $('#cancel-patient-select');
-    if (!validate([['Cliente', $patient]])) return;
     const sessaoId = $patient.data('sessao-id');
-    if (!sessaoId) { showToast('Nenhuma sessão agendada para cancelar.'); return; }
+    if (!sessaoId) { showToast('Selecione um cliente com sessão agendada.'); return; }
 
-    const p = patientById($patient.val());
+    const nomeCliente = $patient.data('cliente-nome') || $patient.find('option:selected').text();
     const infoSessao = $('#cancel-current-session').text().replace('Próxima sessão: ', '').trim();
     showModal({
       title: 'Confirmar cancelamento',
-      body: `Tem certeza que deseja cancelar a sessão de <strong>${p ? p.nome : ''}</strong> marcada para <strong>${infoSessao}</strong>?`,
+      body: `Tem certeza que deseja cancelar a sessão de <strong>${nomeCliente}</strong> marcada para <strong>${infoSessao}</strong>?`,
       yesLabel: 'Sim, cancelar',
       onConfirm: async () => {
         const reason = $('[name="reason"]', '#form-cancel').val();
@@ -302,7 +351,7 @@ $(function () {
             title: 'Sessão cancelada!',
             subtitle: 'O cancelamento foi registrado.',
             details: [
-              ['Paciente', p ? p.nome : ''],
+              ['Paciente', nomeCliente],
               ['Sessão',   infoSessao],
               ['Motivo',   reason],
             ],
@@ -346,25 +395,28 @@ $(function () {
 
   // ── Dynamic: seleção de paciente → próxima sessão ────────────────────────
   $('#reschedule-patient-select').on('change', async function () {
-    const id = $(this).val();
+    const id   = $(this).val();
+    const nome = $(this).find('option:selected').text();
     if (!id) {
       $('#reschedule-current-session').html('<p class="muted">Selecione um cliente para ver a próxima sessão.</p>');
+      $(this).data({ 'sessao-id': null, 'cliente-nome': '' });
       return;
     }
+    $(this).data('cliente-nome', nome);
     try {
       const sessoes = await apiFetch(`/sessoes/cliente/${id}`);
-      const proxima = sessoes.find(s => s.status === 'agendada');
+      const proxima = sessoes.find(s => s.status === 'pendente');
       if (proxima) {
-        const dt  = proxima.dt_sessao.replace('T', ' ');
+        const dt   = proxima.dt_sessao.replace('T', ' ');
         const dia  = formatDate(dt.split(' ')[0]);
         const hora = dt.split(' ')[1]?.slice(0, 5) || '';
         $('#reschedule-current-session').html(
           `<p class="muted">Próxima sessão: <strong>${dia} – ${hora}</strong></p>`
         );
-        $('#reschedule-patient-select').data('sessao-id', proxima.id);
+        $(this).data('sessao-id', proxima.id);
       } else {
         $('#reschedule-current-session').html('<p class="muted">Nenhuma sessão agendada para este paciente.</p>');
-        $('#reschedule-patient-select').data('sessao-id', null);
+        $(this).data('sessao-id', null);
       }
     } catch (err) {
       showToast('Erro ao carregar sessões.');
@@ -372,14 +424,17 @@ $(function () {
   });
 
   $('#cancel-patient-select').on('change', async function () {
-    const id = $(this).val();
+    const id   = $(this).val();
+    const nome = $(this).find('option:selected').text();
     if (!id) {
       $('#cancel-current-session').html('<p class="muted">Selecione um cliente para ver a próxima sessão.</p>');
+      $(this).data({ 'sessao-id': null, 'cliente-nome': '' });
       return;
     }
+    $(this).data('cliente-nome', nome);
     try {
       const sessoes = await apiFetch(`/sessoes/cliente/${id}`);
-      const proxima = sessoes.find(s => s.status === 'agendada');
+      const proxima = sessoes.find(s => s.status === 'pendente');
       if (proxima) {
         const dt   = proxima.dt_sessao.replace('T', ' ');
         const dia  = formatDate(dt.split(' ')[0]);
@@ -387,10 +442,10 @@ $(function () {
         $('#cancel-current-session').html(
           `<p class="muted">Próxima sessão: <strong>${dia} – ${hora}</strong></p>`
         );
-        $('#cancel-patient-select').data('sessao-id', proxima.id);
+        $(this).data('sessao-id', proxima.id);
       } else {
         $('#cancel-current-session').html('<p class="muted">Nenhuma sessão agendada para este paciente.</p>');
-        $('#cancel-patient-select').data('sessao-id', null);
+        $(this).data('sessao-id', null);
       }
     } catch (err) {
       showToast('Erro ao carregar sessões.');
@@ -490,36 +545,62 @@ $(function () {
   }
 
   // ── Agenda ───────────────────────────────────────────────────────────────
-  function renderAgenda() {
-    $('#agenda-container').html(agendaData.map(day => `
-      <div class="agenda-day">
-        <p class="agenda-day-label">${day.label}</p>
-        ${day.sessions.map(s => `
-          <div class="session-card">
-            <span class="session-time">${s.time}</span>
-            <div class="session-info">
-              <div class="session-patient">${s.patient}</div>
-              <div class="session-meta">${s.type} · ${s.value}</div>
-            </div>
-            <div class="session-actions">
-              <button class="btn btn-secondary btn-sm agenda-reschedule" data-patient-id="${s.patientId}">Remarcar</button>
-              <button class="btn btn-danger btn-sm agenda-cancel" data-patient-id="${s.patientId}">Cancelar</button>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `).join(''));
+  async function renderAgenda() {
+    const { inicio, fim } = semanaAtual();
+    $('#agenda-container').html('<p class="muted">Carregando...</p>');
+    try {
+      const sessoes = await apiFetch(
+        `/sessoes/agenda?inicio=${inicio.toISOString()}&fim=${fim.toISOString()}`
+      );
+      if (!sessoes.length) {
+        $('#agenda-container').html('<p class="muted">Nenhuma sessão esta semana.</p>');
+        return;
+      }
+      const byDay = {};
+      sessoes.forEach(s => {
+        const dia = s.dt_sessao.split('T')[0];
+        if (!byDay[dia]) byDay[dia] = [];
+        byDay[dia].push(s);
+      });
+      $('#agenda-container').html(
+        Object.keys(byDay).sort().map(dia => {
+          const d     = new Date(dia + 'T12:00:00');
+          const label = `${DIAS_PT[d.getDay()]}, ${formatDate(dia)}`;
+          const cards = byDay[dia].map(s => {
+            const hora = s.dt_sessao.split('T')[1]?.slice(0, 5) || '—';
+            return `
+              <div class="session-card">
+                <span class="session-time">${hora}</span>
+                <div class="session-info">
+                  <div class="session-patient">${s.nome_cliente || '—'}</div>
+                  <div class="session-meta">${s.tipo || '—'}</div>
+                </div>
+                <div class="session-actions">
+                  <button class="btn btn-secondary btn-sm agenda-reschedule" data-patient-id="${s.id_cliente}">Remarcar</button>
+                  <button class="btn btn-danger btn-sm agenda-cancel" data-patient-id="${s.id_cliente}">Cancelar</button>
+                </div>
+              </div>`;
+          }).join('');
+          return `<div class="agenda-day"><p class="agenda-day-label">${label}</p>${cards}</div>`;
+        }).join('')
+      );
+    } catch (err) {
+      showToast('Erro ao carregar agenda.');
+      $('#agenda-container').html('<p class="muted">Erro ao carregar agenda.</p>');
+    }
   }
 
-  $(document).on('click', '.agenda-reschedule', function () {
+  $(document).on('click', '.agenda-reschedule', async function () {
     const id = $(this).data('patient-id');
     showScreen('screen-reschedule');
+    await fillClienteSelects();
     $('#reschedule-patient-select').val(id).trigger('change');
   });
 
-  $(document).on('click', '.agenda-cancel', function () {
+  $(document).on('click', '.agenda-cancel', async function () {
     const id = $(this).data('patient-id');
     showScreen('screen-cancel-session');
+    await fillClienteSelects();
     $('#cancel-patient-select').val(id).trigger('change');
   });
 
