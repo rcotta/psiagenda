@@ -5,8 +5,8 @@ INSERT INTO grupo_sessao (id_usuario, id_cliente, tipo, qtd_sessoes)
 VALUES (?, ?, ?, ?);
 
 -- [criar_sessao]
-INSERT INTO sessao (id_grupo_sessao, dt_sessao, duracao)
-VALUES (?, ?, ?);
+INSERT INTO sessao (id_grupo_sessao, dt_sessao, duracao, status)
+VALUES (?, ?, ?, 'pendente');
 
 -- [agenda_semana]
 -- Retorna todas as sessões não canceladas de um psicólogo em um intervalo de datas
