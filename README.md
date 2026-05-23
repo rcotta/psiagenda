@@ -2,6 +2,8 @@
 
 Sistema de gestão de agenda para psicólogos. Permite cadastrar pacientes, agendar sessões individuais ou em pacotes e acompanhar pagamentos.
 
+**IMPORTANTE**: este sistema é um protótipo desenvolvido no escopo da disciplina Projeto Integrador I da UNIVESP. O protótipo tem débitos técnicos conhecidos, não considere - em hipótese alguma - como um sistema pronto para produção.
+
 ## Funcionalidades
 
 - Cadastro de pacientes com histórico de sessões e pagamentos
